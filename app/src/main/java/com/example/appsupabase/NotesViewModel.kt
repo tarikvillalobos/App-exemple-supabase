@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -33,20 +32,21 @@ class NotesViewModel(
         observeNotesRealtime()
     }
 
-    private fun loadNotes() {
+    fun loadNotes() {
         viewModelScope.launch {
             try {
-                val response: HttpResponse = client.get("$supabaseUrl/rest/v1/notes") {
+                val response: HttpResponse = client.get("$supabaseUrl/rest/v1/newnotes") {
                     header("apikey", supabaseKey)
                     header("Authorization", "Bearer $supabaseKey")
                     header("Accept", "application/json")
                 }
+
                 if (response.status == HttpStatusCode.OK) {
-                    val notesList: List<Note> = response.body()
+                    val notesList: List<Note> = response.body()  // Aqui está esperando que a resposta seja uma lista de "Note"
                     _notes.value = notesList
                 } else {
-                    // Trate erros aqui
                     println("Erro ao carregar notas: ${response.status}")
+                    println(response.bodyAsText())  // Verifique a resposta do servidor
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -57,18 +57,20 @@ class NotesViewModel(
     fun addNote(content: String) {
         viewModelScope.launch {
             try {
-                val response: HttpResponse = client.post("$supabaseUrl/rest/v1/notes") {
+                val response: HttpResponse = client.post("$supabaseUrl/rest/v1/newnotes") {
                     header("apikey", supabaseKey)
                     header("Authorization", "Bearer $supabaseKey")
                     header("Content-Type", "application/json")
                     header("Prefer", "return=representation")
-                    setBody(mapOf("content" to content))
+                    setBody(mapOf("content" to content))  // Certifique-se de que a chave "content" corresponde ao nome da coluna no Supabase
                 }
+
                 if (response.status == HttpStatusCode.Created) {
-                    val newNote: Note = response.body()  // A nova nota já virá com created_at e updated_at do Supabase
+                    val newNote: Note = response.body()
                     _notes.value = _notes.value + newNote
                 } else {
                     println("Erro ao adicionar nota: ${response.status}")
+                    println(response.bodyAsText())  // Para verificar o que está sendo retornado
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -87,8 +89,8 @@ class NotesViewModel(
                     setBody(mapOf("content" to newContent))
                 }
                 if (response.status == HttpStatusCode.OK) {
-                    val updatedNotes: List<Note> = response.body()
-                    val updatedNote = updatedNotes.firstOrNull()
+                    val updatedNewNotes: List<Note> = response.body()
+                    val updatedNote = updatedNewNotes.firstOrNull()
                     updatedNote?.let {
                         _notes.value = _notes.value.map { note ->
                             if (note.id == it.id) it else note

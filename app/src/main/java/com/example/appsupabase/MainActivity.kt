@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.example.appsupabase.ui.theme.AppSupabaseTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 // Imports do Ktor
@@ -45,10 +46,17 @@ class MainActivity : ComponentActivity() {
                         SUPABASE_ANON_KEY
                     )
                 )
+
+                // Garantir que as notas sejam carregadas
+                LaunchedEffect(Unit) {
+                    viewModel.loadNotes()  // Carrega as notas ao iniciar a tela
+                }
+
                 NotesScreen(viewModel)
             }
         }
     }
+
 
     override fun onDestroy() {
         super.onDestroy()
