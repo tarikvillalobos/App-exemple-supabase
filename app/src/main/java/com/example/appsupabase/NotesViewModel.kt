@@ -62,15 +62,16 @@ class NotesViewModel(
                     header("Authorization", "Bearer $supabaseKey")
                     header("Content-Type", "application/json")
                     header("Prefer", "return=representation")
-                    setBody(mapOf("content" to content))  // Certifique-se de que a chave "content" corresponde ao nome da coluna no Supabase
+                    setBody(mapOf("content" to content))
                 }
 
                 if (response.status == HttpStatusCode.Created) {
+                    loadNotes()  // Atualizar a tela após inserir
                     val newNote: Note = response.body()
                     _notes.value = _notes.value + newNote
                 } else {
                     println("Erro ao adicionar nota: ${response.status}")
-                    println(response.bodyAsText())  // Para verificar o que está sendo retornado
+                    println(response.bodyAsText())
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -81,7 +82,7 @@ class NotesViewModel(
     fun updateNote(noteId: String, newContent: String) {
         viewModelScope.launch {
             try {
-                val response: HttpResponse = client.patch("$supabaseUrl/rest/v1/notes?id=eq.$noteId") {
+                val response: HttpResponse = client.patch("$supabaseUrl/rest/v1/newnotes?id=eq.$noteId") {
                     header("apikey", supabaseKey)
                     header("Authorization", "Bearer $supabaseKey")
                     header("Content-Type", "application/json")
@@ -89,15 +90,10 @@ class NotesViewModel(
                     setBody(mapOf("content" to newContent))
                 }
                 if (response.status == HttpStatusCode.OK) {
-                    val updatedNewNotes: List<Note> = response.body()
-                    val updatedNote = updatedNewNotes.firstOrNull()
-                    updatedNote?.let {
-                        _notes.value = _notes.value.map { note ->
-                            if (note.id == it.id) it else note
-                        }
-                    }
+                    loadNotes()  // Atualizar a tela após o update
                 } else {
                     println("Erro ao atualizar nota: ${response.status}")
+                    println(response.bodyAsText())  // Verificar o erro retornado pelo servidor
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -105,21 +101,25 @@ class NotesViewModel(
         }
     }
 
-    fun deleteNote(noteId: String) {  // Note que mudei para String caso o id seja UUID
+    fun deleteNote(noteId: String) {
         viewModelScope.launch {
             try {
-                val response: HttpResponse = client.delete("$supabaseUrl/rest/v1/notes?id=eq.$noteId") {
+                // Deletar nota do Supabase
+                val response: HttpResponse = client.delete("$supabaseUrl/rest/v1/newnotes?id=eq.$noteId") {
                     header("apikey", supabaseKey)
                     header("Authorization", "Bearer $supabaseKey")
                     header("Prefer", "return=representation")
                 }
-                if (response.status == HttpStatusCode.NoContent) {
-                    _notes.value = _notes.value.filterNot { it.id == noteId }
+
+                if (response.status == HttpStatusCode.NoContent || response.status == HttpStatusCode.OK) {
+                    // Se a nota foi deletada com sucesso, recarregue as notas
+                    loadNotes()  // Atualizar a lista de notas
                 } else {
                     println("Erro ao deletar nota: ${response.status}")
+                    println("Resposta do servidor: ${response.bodyAsText()}")  // Log do erro do servidor
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                e.printStackTrace()  // Exibir erro no console
             }
         }
     }

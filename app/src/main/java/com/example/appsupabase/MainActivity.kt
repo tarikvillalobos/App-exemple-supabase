@@ -21,8 +21,8 @@ import kotlinx.serialization.json.Json
 class MainActivity : ComponentActivity() {
 
     companion object {
-        private const val SUPABASE_URL = "url"
-        private const val SUPABASE_ANON_KEY = "key"
+        private const val SUPABASE_URL = "URL"
+        private const val SUPABASE_ANON_KEY = "KEY"
     }
 
     private val httpClient = HttpClient(CIO) {

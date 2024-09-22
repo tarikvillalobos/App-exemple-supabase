@@ -11,20 +11,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen(viewModel: NotesViewModel) {
     val notes by viewModel.notes.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(notes) { note ->
-                NoteItem(note, onUpdate = { newContent ->
-                    viewModel.updateNote(note.id, newContent)
-                }, onDelete = {
-                    viewModel.deleteNote(note.id)
-                })
+        TopAppBar(
+            title = { Text(text = "Notas") },
+            actions = {
+                IconButton(onClick = { viewModel.loadNotes() }) {
+                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Atualizar")
+                }
+            }
+        )
+
+        if (notes.isEmpty()) {
+            Text(
+                text = "Nenhuma nota encontrada.",
+                modifier = Modifier.padding(16.dp)
+            )
+        } else {
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                items(notes) { note ->
+                    NoteItem(note, onUpdate = { newContent ->
+                        viewModel.updateNote(note.id, newContent)
+                    }, onDelete = {
+                        viewModel.deleteNote(note.id)
+                    })
+                }
             }
         }
+
         NoteInput(onAddNote = { content ->
             viewModel.addNote(content)
         })
