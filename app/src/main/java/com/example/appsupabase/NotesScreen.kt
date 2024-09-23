@@ -16,6 +16,11 @@ import androidx.compose.ui.unit.dp
 fun NotesScreen(viewModel: NotesViewModel) {
     val notes by viewModel.notes.collectAsState()
 
+    // Adicionando um log para depuração
+    LaunchedEffect(notes) {
+        println("Notas na tela: $notes")
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
             title = { Text(text = "Notas") },

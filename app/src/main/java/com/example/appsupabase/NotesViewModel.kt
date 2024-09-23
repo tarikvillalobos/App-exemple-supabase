@@ -131,30 +131,41 @@ class NotesViewModel(
 
             try {
                 client.webSocket(urlString = websocketUrl) {
-                    // Junta-se ao canal
+                    println("Conectado ao WebSocket para atualizações em tempo real")
+
+                    // Inscreva-se ao canal da tabela 'newnotes'
                     val joinMessage = mapOf(
-                        "topic" to "realtime:public:notes",
+                        "topic" to "realtime:public:newnotes",
                         "event" to "phx_join",
                         "payload" to emptyMap<String, Any>(),
                         "ref" to "1"
                     )
                     sendSerialized(joinMessage)
 
+                    // Recebendo atualizações em tempo real
+                    // TODO Essa parte ainda não está funcionando
                     for (frame in incoming) {
                         if (frame is Frame.Text) {
                             val text = frame.readText()
+                            println("Mensagem WebSocket recebida: $text")
+
+                            // Processa as mensagens recebidas
                             handleRealtimeMessage(text)
                         }
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                println("Erro ao conectar ao WebSocket: ${e.message}")
             }
         }
     }
 
     private fun handleRealtimeMessage(message: String) {
         try {
+            // Log para ver as mensagens recebidas
+            println("Mensagem recebida via WebSocket: $message")
+
             val json = Json.parseToJsonElement(message).jsonObject
             val payload = json["payload"]?.jsonObject ?: return
             val type = payload["type"]?.jsonPrimitive?.content
